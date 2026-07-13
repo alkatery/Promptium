@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Promptium — محوّل الأفكار إلى برومبتات احترافية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1220; --card:#151b2c; --card2:#1b2338; --border:#2a3450;
+    --text:#eef2fb; --muted:#9aa7c7; --accent:#f0b429; --accent2:#2dd4bf;
+    --danger:#f87171; --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+    font-size:18px; line-height:1.8; min-height:100vh;
+  }
+  .container{max-width:900px; margin:0 auto; padding:24px 16px 80px;}
+  header{text-align:center; padding:36px 0 20px;}
+  header h1{font-size:2.4rem; font-weight:800;}
+  header h1 .logo{color:var(--accent);}
+  header p{color:var(--muted); font-size:1.1rem; margin-top:6px;}
+  .card{
+    background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius); padding:22px; margin-top:18px;
+  }
+  label.section-label{display:block; font-weight:700; margin-bottom:10px; font-size:1.05rem;}
+  textarea#idea{
+    width:100%; min-height:130px; resize:vertical;
+    background:var(--card2); color:var(--text);
+    border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; font-family:inherit; font-size:1.15rem; line-height:1.8;
+  }
+  textarea#idea:focus{outline:2px solid var(--accent2); border-color:transparent;}
+  .row{display:flex; flex-wrap:wrap; gap:14px; margin-top:18px; align-items:flex-end;}
+  .field{flex:1; min-width:220px;}
+  .pills{display:flex; flex-wrap:wrap; gap:8px;}
+  .pill{
+    background:var(--card2); border:1px solid var(--border); color:var(--muted);
+    padding:8px 18px; border-radius:999px; cursor:pointer; font-family:inherit;
+    font-size:1rem; font-weight:500; transition:all .15s;
+  }
+  .pill.active{background:var(--accent); color:#1a1500; border-color:var(--accent); font-weight:700;}
+  select, input[type="text"], input[type="password"]{
+    width:100%; background:var(--card2); color:var(--text);
+    border:1px solid var(--border); border-radius:10px;
+    padding:10px 14px; font-family:inherit; font-size:1rem;
+  }
+  .mode-toggle{display:flex; gap:8px; background:var(--card2); border-radius:12px; padding:5px; width:fit-content;}
+  .mode-btn{
+    border:none; background:transparent; color:var(--muted); cursor:pointer;
+    padding:8px 20px; border-radius:9px; font-family:inherit; font-size:1rem; font-weight:700;
+  }
+  .mode-btn.active{background:var(--accent2); color:#00201b;}
+  #aiPanel{display:none; margin-top:16px; background:var(--card2); border-radius:10px; padding:16px; border:1px dashed var(--border);}
+  #aiPanel.visible{display:block;}
+  #aiPanel .hint{color:var(--muted); font-size:.9rem; margin-top:10px;}
+  #generateBtn{
+    display:block; width:100%; margin-top:22px;
+    background:linear-gradient(135deg, var(--accent), #f7ce68);
+    color:#1a1500; border:none; border-radius:12px;
+    padding:16px; font-family:inherit; font-size:1.3rem; font-weight:800; cursor:pointer;
+  }
+  #generateBtn:hover{filter:brightness(1.07);}
+  #generateBtn:disabled{opacity:.5; cursor:wait;}
+  #status{margin-top:14px; color:var(--muted); text-align:center; min-height:1.5em;}
+  #status.error{color:var(--danger); font-weight:700;}
+  /* ===== output ===== */
+  #output{display:none;}
+  #output.visible{display:block;}
+  .out-toolbar{display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;}
+  .out-toolbar h2{font-size:1.5rem;}
+  .copy-all-btn{
+    background:var(--accent2); color:#00201b; border:none; border-radius:9px;
+    padding:9px 20px; font-family:inherit; font-size:1rem; font-weight:700; cursor:pointer;
+  }
+  #result h2{
+    color:var(--accent); font-size:1.35rem; margin:26px 0 10px;
+    padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+  #result h3{color:var(--accent2); font-size:1.15rem; margin:18px 0 8px;}
+  #result p{margin:8px 0;}
+  #result ul{margin:8px 24px 8px 0;}
+  #result li{margin:4px 0;}
+  #result table{border-collapse:collapse; width:100%; margin:12px 0; font-size:.98rem;}
+  #result th, #result td{border:1px solid var(--border); padding:8px 12px; text-align:right;}
+  #result th{background:var(--card2); color:var(--accent);}
+  .codewrap{position:relative; margin:12px 0;}
+  .codewrap pre{
+    direction:rtl; text-align:right; white-space:pre-wrap; word-break:break-word;
+    background:#0a0e1a; border:1px solid var(--border); border-radius:10px;
+    padding:16px 16px 16px 90px; font-family:inherit; font-size:1.02rem; line-height:1.9;
+    color:#d9e2f5;
+  }
+  .codewrap pre.ltr{direction:ltr; text-align:left; padding:16px 90px 16px 16px;}
+  .copy-btn{
+    position:absolute; top:10px; left:10px;
+    background:var(--card2); color:var(--muted); border:1px solid var(--border);
+    border-radius:8px; padding:4px 14px; cursor:pointer; font-family:inherit; font-size:.9rem;
+  }
+  .copy-btn:hover{color:var(--accent);}
+  .copy-btn.copied{background:var(--accent2); color:#00201b; border-color:var(--accent2); font-weight:700;}
+  footer{text-align:center; color:var(--muted); margin-top:50px; font-size:.95rem;}
+  footer a{color:var(--accent2); text-decoration:none;}
+  @media (max-width:600px){ body{font-size:16px;} header h1{font-size:1.8rem;} }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1><span class="logo">🧠</span> Promptium</h1>
+    <p>اكتب فكرتك بأي صياغة — واحصل على برومبت احترافي كامل جاهز للنسخ</p>
+  </header>
+
+  <div class="card">
+    <label class="section-label" for="idea">✍️ اكتب فكرتك أو هدفك</label>
+    <textarea id="idea" placeholder="مثال: صورة إعلانية لعطر فاخر… أو: مقال تسويقي عن القهوة المختصة… أو: أداة بايثون لتنظيم الملفات…"></textarea>
+
+    <div class="row">
+      <div class="field">
+        <label class="section-label">🗂️ نوع المهمة</label>
+        <div class="pills" id="typePills">
+          <button class="pill active" data-type="auto">تلقائي 🪄</button>
+          <button class="pill" data-type="text">نص 📝</button>
+          <button class="pill" data-type="image">صورة 🖼️</button>
+          <button class="pill" data-type="video">فيديو 🎬</button>
+          <button class="pill" data-type="code">كود 💻</button>
+        </div>
+      </div>
+      <div class="field">
+        <label class="section-label">🎯 النموذج المستهدف</label>
+        <select id="targetModel">
+          <option value="عام">عام — متوافق مع كل النماذج</option>
+          <option value="ChatGPT">ChatGPT</option>
+          <option value="Claude">Claude</option>
+          <option value="Gemini">Gemini</option>
+          <option value="Grok">Grok</option>
+          <option value="Midjourney">Midjourney</option>
+          <option value="Stable Diffusion / Flux">Stable Diffusion / Flux</option>
+          <option value="DALL·E / Ideogram">DALL·E / Ideogram</option>
+          <option value="Veo / Sora / Runway / Pika">Veo / Sora / Runway / Pika</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="section-label">⚙️ طريقة التحويل</label>
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="modeLocal">⚡ فوري (بدون إنترنت)</button>
+          <button class="mode-btn" id="modeAI">🤖 ذكاء اصطناعي (API)</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="aiPanel">
+      <div class="row" style="margin-top:0">
+        <div class="field">
+          <label class="section-label">المزوّد</label>
+          <select id="provider">
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="gemini">Gemini (Google)</option>
+            <option value="openai">ChatGPT (OpenAI)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="section-label">اسم النموذج</label>
+          <input type="text" id="aiModel" dir="ltr">
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label class="section-label">🔑 مفتاح API</label>
+          <input type="password" id="apiKey" dir="ltr" placeholder="sk-...">
+        </div>
+      </div>
+      <p class="hint">🔒 يُحفظ المفتاح في متصفحك فقط (localStorage) ولا يُرسل إلا إلى المزوّد الذي اخترته مباشرة. الوضع الفوري لا يحتاج أي مفتاح.</p>
+    </div>
+
+    <button id="generateBtn">🚀 حوّل إلى برومبت احترافي</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="card" id="output">
+    <div class="out-toolbar">
+      <h2>📋 النتيجة</h2>
+      <button class="copy-all-btn" id="copyAllBtn">📑 نسخ كل البرومبتات</button>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <footer>
+    <p>Promptium — خبير هندسة الأوامر · <a href="PROMPT.md">البرومبت الأساسي</a> · <a href="docs/usage.md">دليل الاستخدام</a></p>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const F = '```'; // ``` code fence
+
+/* ========== state ========== */
+let selectedType = 'auto';
+let mode = localStorage.getItem('promptium_mode') || 'local';
+const DEFAULT_MODELS = { claude: 'claude-opus-4-8', gemini: 'gemini-2.5-flash', openai: 'gpt-4o-mini' };
+
+/* ========== UI wiring ========== */
+const $ = (id) => document.getElementById(id);
+
+document.querySelectorAll('#typePills .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#typePills .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedType = btn.dataset.type;
+  });
+});
+
+function setMode(m){
+  mode = m;
+  localStorage.setItem('promptium_mode', m);
+  $('modeLocal').classList.toggle('active', m === 'local');
+  $('modeAI').classList.toggle('active', m === 'ai');
+  $('aiPanel').classList.toggle('visible', m === 'ai');
+}
+$('modeLocal').addEventListener('click', () => setMode('local'));
+$('modeAI').addEventListener('click', () => setMode('ai'));
+
+function loadProviderFields(){
+  const p = $('provider').value;
+  $('aiModel').value = localStorage.getItem('promptium_model_' + p) || DEFAULT_MODELS[p];
+  $('apiKey').value = localStorage.getItem('promptium_key_' + p) || '';
+}
+$('provider').addEventListener('change', loadProviderFields);
+$('aiModel').addEventListener('change', () => localStorage.setItem('promptium_model_' + $('provider').value, $('aiModel').value.trim()));
+$('apiKey').addEventListener('change', () => localStorage.setItem('promptium_key_' + $('provider').value, $('apiKey').value.trim()));
+
+const savedProvider = localStorage.getItem('promptium_provider');
+if (savedProvider) $('provider').value = savedProvider;
+$('provider').addEventListener('change', () => localStorage.setItem('promptium_provider', $('provider').value));
+loadProviderFields();
+setMode(mode);
+
+/* ========== type detection ========== */
+const KEYWORDS = {
+  image: ['صورة','صور','تصميم','شعار','لوجو','بوستر','ملصق','غلاف','رسم','لوحة','خلفية','أيقونة','بورتريه','انفوجرافيك','logo','image','photo','poster','illustration','wallpaper','icon'],
+  video: ['فيديو','مقطع','أنيميشن','موشن','ريلز','مونتاج','إعلان متحرك','مشهد','video','reels','animation','motion','trailer'],
+  code:  ['كود','برنامج','تطبيق','موقع','سكريبت','دالة','خوارزمية','بوت','قاعدة بيانات','واجهة برمجية','بايثون','جافا','code','app','script','python','javascript','api','website','function','bot']
+};
+function detectType(text){
+  const t = text.toLowerCase();
+  for (const type of ['image','video','code']){
+    if (KEYWORDS[type].some(k => t.includes(k))) return type;
+  }
+  return 'text';
+}
+
+/* ========== markdown renderer ========== */
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function inline(s){
+  return escapeHtml(s)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+}
+let blockCounter = 0;
+const copyBlocks = [];
+function renderMarkdown(md){
+  copyBlocks.length = 0;
+  const lines = md.split('\n');
+  let html = '', inCode = false, codeBuf = [], listOpen = false, tableBuf = [];
+
+  const flushList = () => { if (listOpen){ html += '</ul>'; listOpen = false; } };
+  const flushTable = () => {
+    if (!tableBuf.length) return;
+    const rows = tableBuf.map(r => r.replace(/^\||\|$/g,'').split('|').map(c => inline(c.trim())));
+    let t = '<table>';
+    rows.forEach((cells, i) => {
+      if (i === 1 && /^[-: ]+$/.test(tableBuf[1].replace(/\|/g,''))) return;
+      const tag = i === 0 ? 'th' : 'td';
+      t += '<tr>' + cells.map(c => '<' + tag + '>' + c + '</' + tag + '>').join('') + '</tr>';
+    });
+    t += '</table>';
+    html += t;
+    tableBuf = [];
+  };
+  const flushCode = () => {
+    const content = codeBuf.join('\n');
+    const id = 'blk' + (++blockCounter);
+    copyBlocks.push(content);
+    const isLtr = /^[\x00-\x7F\s]*$/.test(content);
+    html += '<div class="codewrap"><button class="copy-btn" data-target="' + id + '">📋 نسخ</button><pre id="' + id + '"' + (isLtr ? ' class="ltr"' : '') + '>' + escapeHtml(content) + '</pre></div>';
+    codeBuf = [];
+  };
+
+  for (const raw of lines){
+    const line = raw;
+    if (line.trimStart().startsWith(F)){
+      if (inCode){ flushCode(); inCode = false; }
+      else { flushList(); flushTable(); inCode = true; }
+      continue;
+    }
+    if (inCode){ codeBuf.push(line); continue; }
+
+    if (line.includes('|') && line.trim().startsWith('|')){ flushList(); tableBuf.push(line.trim()); continue; }
+    flushTable();
+
+    if (line.startsWith('### ')){ flushList(); html += '<h3>' + inline(line.slice(4)) + '</h3>'; }
+    else if (line.startsWith('## ')){ flushList(); html += '<h3>' + inline(line.slice(3)) + '</h3>'; }
+    else if (line.startsWith('# ')){ flushList(); html += '<h2>' + inline(line.slice(2)) + '</h2>'; }
+    else if (line.trimStart().startsWith('- ')){
+      if (!listOpen){ html += '<ul>'; listOpen = true; }
+      html += '<li>' + inline(line.trimStart().slice(2)) + '</li>';
+    }
+    else if (line.trim() === ''){ flushList(); }
+    else { flushList(); html += '<p>' + inline(line) + '</p>'; }
+  }
+  if (inCode) flushCode();
+  flushList(); flushTable();
+  return html;
+}
+
+function copyText(text, btn){
+  const done = () => {
+    if (!btn) return;
+    const old = btn.textContent;
+    btn.textContent = '✓ تم النسخ';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = old; btn.classList.remove('copied'); }, 1600);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else fallbackCopy(text, done);
+}
+function fallbackCopy(text, done){
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch(e){}
+  document.body.removeChild(ta);
+}
+$('result').addEventListener('click', (e) => {
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const pre = $(btn.dataset.target);
+  if (pre) copyText(pre.textContent, btn);
+});
+$('copyAllBtn').addEventListener('click', (e) => {
+  if (copyBlocks.length) copyText(copyBlocks.join('\n\n' + '─'.repeat(30) + '\n\n'), e.target);
+});
+
+/* ========== local generators ========== */
+const TYPE_LABEL = { text:'نص / محتوى مكتوب', image:'توليد صورة', video:'توليد فيديو', code:'برمجة / كود' };
+
+function analysisSection(type, idea, target){
+  return [
+    '# تحليل المهمة',
+    '- **الهدف الأساسي:** ' + idea,
+    '- **نوع المهمة:** ' + TYPE_LABEL[type],
+    '- **النموذج المستهدف:** ' + target,
+    '- **الجمهور المستهدف:** [الجمهور] — عدّله حسب حاجتك',
+    '',
+    '# الافتراضات المستخدمة',
+    '- اللغة الأساسية للمخرجات: العربية (قابلة للتغيير عبر [اللغة]).',
+    '- النبرة: احترافية متوازنة ما لم يُحدد غير ذلك.',
+    '- المتغيرات بين أقواس مثل [المجال] و[الجمهور] قابلة للتخصيص قبل الاستخدام.',
+    ''
+  ].join('\n');
+}
+
+function genText(idea, target){
+  const short = 'اكتب محتوى عن: ' + idea + '\nالجمهور: [الجمهور] | النبرة: [النبرة] | اللغة: [اللغة] | الطول: [عدد الكلمات] كلمة تقريباً.\nلا تختلق معلومات أو أرقاماً غير مؤكدة.';
+  const pro = [
+    'تصرّف ككاتب محتوى محترف متخصص في [المجال] بخبرة تزيد عن 10 سنوات.',
+    '',
+    'الهدف: ' + idea,
+    '',
+    'التعليمات:',
+    '1. ابدأ بمقدمة خطّافة تجذب القارئ من أول سطر.',
+    '2. قسّم المحتوى إلى فقرات قصيرة بعناوين فرعية واضحة.',
+    '3. ادعم كل فكرة رئيسية بمثال عملي أو حقيقة موثوقة — ولا تختلق أرقاماً أو مصادر.',
+    '4. اختم بخلاصة قابلة للتنفيذ أو دعوة واضحة لاتخاذ إجراء.',
+    '',
+    'القيود: الطول [عدد الكلمات] كلمة | الجمهور: [الجمهور] | النبرة: [النبرة] | اللغة: [اللغة].',
+    'تنسيق الإخراج: عناوين واضحة، فقرات لا تتجاوز 3 أسطر، قائمة نقطية عند تعداد الخطوات.',
+    'قبل التسليم: راجع النص وتأكد من خلوّه من الحشو والتكرار ومن أي معلومة غير مؤكدة.'
+  ].join('\n');
+  const advanced = [
+    'تصرّف كخبير عالمي في [المجال] وكاتب محتوى حائز على جوائز، تكتب بالعربية الفصحى الواضحة.',
+    '',
+    '<السياق>',
+    'المهمة: ' + idea,
+    'الجمهور: [الجمهور] | المنصة: [المنصة] | الهدف النهائي: [الهدف]',
+    '</السياق>',
+    '',
+    '<منهجية العمل>',
+    '1. حلّل نية الجمهور: ماذا يريد أن يعرف؟ وما الذي سيدفعه للتفاعل؟',
+    '2. ضع مخططاً من 3-5 أقسام رئيسية قبل الكتابة.',
+    '3. اكتب المسودة ملتزماً بالمخطط، بجمل قصيرة ولغة نشطة.',
+    '4. راجع ذاتياً: احذف الحشو، وحّد النبرة، وتحقق من دقة كل معلومة.',
+    '</منهجية العمل>',
+    '',
+    '<معايير الجودة>',
+    '- كل فقرة تقدم قيمة جديدة — لا تكرار.',
+    '- صفر معلومات مختلقة؛ عند عدم اليقين صرّح بذلك.',
+    '- قابلية القراءة: جمل لا تتجاوز 20 كلمة غالباً.',
+    '</معايير الجودة>',
+    '',
+    '<تنسيق الإخراج>',
+    'عنوان رئيسي جذاب + مقدمة (50 كلمة) + أقسام بعناوين فرعية + خاتمة بدعوة لإجراء.',
+    'في النهاية أضف: 3 اقتراحات عناوين بديلة.',
+    '</تنسيق الإخراج>'
+  ].join('\n');
+
+  return [
+    '# البرومبت الاحترافي',
+    'ثلاث نسخ جاهزة — اختر ما يناسب حجم مهمتك:',
+    '',
+    '## النسخة المختصرة',
+    F, short, F,
+    '',
+    '## النسخة الاحترافية',
+    F, pro, F,
+    '',
+    '# النسخة المتقدمة',
+    'بوسوم XML لفصل الأقسام — مثالية لـ Claude وGPT-4 وما بعدهما:',
+    F, advanced, F,
+    '',
+    '# الإعدادات المقترحة',
+    '| الإعداد | القيمة المقترحة |',
+    '|---|---|',
+    '| النموذج | ' + target + ' |',
+    '| طول المخرجات | حسب [عدد الكلمات] المحدد |',
+    '| عدد المحاولات | 2-3 نسخ ثم اختر الأفضل |',
+    '',
+    '# تحسينات اختيارية',
+    '- أضف مثالاً لنص يعجبك (Few-shot) ليحاكي النموذج أسلوبه.',
+    '- حدد كلمات مفتاحية لتحسين الظهور في محركات البحث إن كان المحتوى للنشر.',
+    '- اطلب جدول محتويات أولاً ثم اطلب كتابة كل قسم على حدة للمقالات الطويلة.',
+    '',
+    '# أخطاء يجب تجنبها',
+    '- طلب "اكتب مقالاً" دون تحديد الجمهور والطول والنبرة.',
+    '- ترك المتغيرات [بين الأقواس] دون استبدالها بقيم حقيقية.',
+    '- قبول أرقام وإحصائيات من النموذج دون التحقق منها.'
+  ].join('\n');
+}
+
+function genImage(idea, target){
+  const isMJ = target.includes('Midjourney');
+  const isSD = target.includes('Stable') || target.includes('Flux');
+  const arSuffix = (ar) => isMJ ? ' --ar ' + ar + ' --v 6' : '';
+
+  const mainPrompt = idea + '، مشهد مفصّل بتكوين متوازن، تفاصيل فائقة الدقة، تصوير سينمائي واقعي، إضاءة [نوع الإضاءة: ذهبية دافئة / طبيعية / استوديو]، عمق ميدان ضحل يعزل الموضوع الرئيسي، ألوان [لوحة الألوان] متناسقة، أسلوب [الأسلوب البصري: واقعي / سينمائي / مينيمال / فني]، جودة 8K فائقة الوضوح';
+  const negative = 'low quality, blurry, distorted, deformed, bad anatomy, extra limbs, watermark, text, signature, logo, oversaturated, jpeg artifacts, cartoon, low resolution, cropped, out of frame';
+
+  const sizes = [
+    '## Square (مربع)',
+    F, mainPrompt + arSuffix('1:1') + '\n→ المقاس: 1024×1024', F,
+    F, mainPrompt + arSuffix('1:1') + '\n→ المقاس: 2048×2048', F,
+    '',
+    '## Portrait (طولي)',
+    F, mainPrompt + arSuffix('2:3') + '\n→ المقاس: 1024×1536', F,
+    F, mainPrompt + arSuffix('4:5') + '\n→ المقاس: 1080×1350', F,
+    F, mainPrompt + arSuffix('9:16') + '\n→ المقاس: 1440×2560', F,
+    '',
+    '## Landscape (عرضي)',
+    F, mainPrompt + arSuffix('3:2') + '\n→ المقاس: 1536×1024', F,
+    F, mainPrompt + arSuffix('16:9') + '\n→ المقاس: 1920×1080', F,
+    F, mainPrompt + arSuffix('16:9') + '\n→ المقاس: 2560×1440', F
+  ].join('\n');
+
+  return [
+    '# البرومبت الاحترافي',
+    F, mainPrompt + (isMJ ? ' --ar [نسبة الأبعاد] --v 6 --style raw' : ''), F,
+    '',
+    '# Negative Prompt',
+    (isSD || isMJ ? 'إلزامي لهذا النموذج:' : 'استخدمه إن كان النموذج يدعمه (Stable Diffusion / Flux / Midjourney عبر --no):'),
+    F, negative, F,
+    '',
+    '# الإعدادات المقترحة',
+    '| الإعداد | القيمة |',
+    '|---|---|',
+    '| نوع العدسة | 50mm f/1.8 للبورتريه · 35mm للمشاهد الواسعة · 100mm macro للتفاصيل |',
+    '| الإضاءة | [نوع الإضاءة] — ذهبية دافئة للأجواء، Softbox للمنتجات، طبيعية للواقعية |',
+    '| زاوية الكاميرا | مستوى النظر افتراضياً · منخفضة للفخامة · علوية 45° للمنتجات والأطعمة |',
+    '| مستوى التفاصيل | فائق (Ultra-detailed, intricate details) |',
+    '| أسلوب التصميم | [الأسلوب البصري] |',
+    '| الألوان | [لوحة الألوان] — حدد 2-3 ألوان مهيمنة |',
+    '| جودة الرندر | 8K, photorealistic, high dynamic range |',
+    '',
+    '# النسخة المتقدمة',
+    '## مقاسات جاهزة لكل الاستخدامات',
+    sizes,
+    '',
+    '## Social Media (منصات التواصل)',
+    '| المنصة | المقاس | النسبة |',
+    '|---|---|---|',
+    '| Instagram Post | 1080×1350 | 4:5 |',
+    '| Instagram Story | 1080×1920 | 9:16 |',
+    '| TikTok | 1080×1920 | 9:16 |',
+    '| YouTube Thumbnail | 1280×720 | 16:9 |',
+    '| Facebook Post | 1200×630 | 1.91:1 |',
+    '| LinkedIn Post | 1200×627 | 1.91:1 |',
+    '| X (Twitter) Post | 1600×900 | 16:9 |',
+    '',
+    'استخدم البرومبت الرئيسي نفسه مع تغيير نسبة الأبعاد حسب الجدول' + (isMJ ? ' (عبر --ar)' : ' (من إعدادات المولّد)') + '.',
+    '',
+    '# تحسينات اختيارية',
+    '- أضف اسم مصوّر أو فنان مرجعي للأسلوب (in the style of...) إن أردت طابعاً محدداً.',
+    '- لنص داخل الصورة استخدم DALL·E أو Ideogram وضع النص بين علامتي اقتباس.',
+    '- في Midjourney جرّب --style raw لواقعية أعلى و--stylize لمزيد من الطابع الفني.',
+    '',
+    '# أخطاء يجب تجنبها',
+    '- حشو البرومبت بأفكار متناقضة (واقعي + كرتوني معاً).',
+    '- إهمال Negative Prompt في Stable Diffusion — النتائج ستتشوه.',
+    '- طلب نص عربي داخل الصورة في نماذج لا تدعم العربية جيداً.'
+  ].join('\n');
+}
+
+function genVideo(idea, target){
+  const vprompt = [
+    'فيديو سينمائي: ' + idea,
+    '',
+    'المشاهد (المدة الكلية: [المدة] ثانية):',
+    'مشهد 1 (0-3 ث): لقطة افتتاحية واسعة تؤسس المكان والأجواء — حركة كاميرا Dolly-in بطيئة.',
+    'مشهد 2 (3-8 ث): لقطة متوسطة على الموضوع الرئيسي — حركة Orbit دائرية سلسة، عمق ميدان ضحل.',
+    'مشهد 3 (8-12 ث): لقطات مقربة للتفاصيل — Slow motion مع إضاءة درامية.',
+    'مشهد 4 (12-[المدة] ث): لقطة ختامية Pull-back تكشف المشهد كاملاً مع ظهور [الشعار / الرسالة].',
+    '',
+    'الإضاءة: [نوع الإضاءة: ذهبية دافئة / نيون ليلية / طبيعية نهارية]، تباين سينمائي.',
+    'المؤثرات: جزيئات ضوئية خفيفة، Lens flare طبيعي، تدرج ألوان سينمائي (Teal & Orange).',
+    'الانتقالات: قطع سلس متزامن مع إيقاع الموسيقى، Match-cut بين المشهدين 2 و3.',
+    'الصوت: موسيقى [نوع الموسيقى] تصاعدية، مؤثرات صوتية محيطية واقعية.',
+    'الجودة: 4K، 24fps سينمائي، نسبة أبعاد [نسبة الأبعاد].'
+  ].join('\n');
+
+  return [
+    '# البرومبت الاحترافي',
+    '## Video Prompt (شامل — يعمل على كل النماذج)',
+    F, vprompt, F,
+    '',
+    '# الإعدادات المقترحة',
+    '| العنصر | التوصية |',
+    '|---|---|',
+    '| المدة | [المدة] ثانية (8-15 ث مثالية لمعظم النماذج الحالية) |',
+    '| نسبة الأبعاد | 16:9 لليوتيوب · 9:16 للريلز وتيك توك · 1:1 للفيد |',
+    '| حركة الكاميرا | حركة واحدة واضحة لكل مشهد — لا تخلط حركتين |',
+    '| الإيقاع | بطيء للفخامة والدراما · سريع للطاقة والإعلانات |',
+    '',
+    '# النسخة المتقدمة',
+    '## تعليمات مخصصة لكل نموذج',
+    '### Veo (Google)',
+    F, 'صف المشهد بجملة سردية متصلة تشمل: الموضوع + الحركة + الكاميرا + الإضاءة + الأسلوب. Veo يدعم الحوار والصوت — أضف: "صوت محيطي: [الوصف]".', F,
+    '### Sora (OpenAI)',
+    F, 'اكتب وصفاً سينمائياً مفصلاً بضمير الغائب مع تحديد حركة الكاميرا صراحة (dolly, pan, orbit). حدد الأسلوب البصري بدقة: photorealistic, cinematic, 35mm film.', F,
+    '### Runway (Gen-3/4)',
+    F, 'ابدأ بحركة الكاميرا ثم الموضوع ثم الأجواء: "[camera movement]: [subject doing action], [lighting], [style]". اجعل الوصف أقل من 500 حرف.', F,
+    '### Pika',
+    F, 'وصف قصير مباشر + معاملات: -camera [motion] -motion [strength 0-4] -ar [نسبة الأبعاد]. مثالي للمقاطع القصيرة السريعة.', F,
+    '',
+    '# تحسينات اختيارية',
+    '- أنشئ صورة مرجعية أولاً (Image-to-Video) لثبات هوية الشخصيات والمنتجات.',
+    '- قسّم الفيديوهات الأطول من 15 ثانية إلى مقاطع منفصلة ثم اجمعها في المونتاج.',
+    '- أضف وصف الحالة الجوية والوقت (غروب، ليل ممطر...) لتعزيز الأجواء.',
+    '',
+    '# أخطاء يجب تجنبها',
+    '- طلب أكثر من 3 أحداث في مقطع واحد قصير — النماذج تتشتت.',
+    '- إهمال تحديد حركة الكاميرا — ستحصل على لقطة ثابتة مملة.',
+    '- توقع نص عربي مقروء داخل الفيديو — معظم النماذج لا تدعمه بعد.'
+  ].join('\n');
+}
+
+function genCode(idea, target){
+  const prompt = [
+    'تصرّف كمهندس برمجيات خبير (Senior) متخصص في [اللغة البرمجية] وأفضل ممارسات هندسة البرمجيات.',
+    '',
+    'الهدف: ' + idea,
+    '',
+    'المتطلبات:',
+    '- اللغة البرمجية: [اللغة البرمجية] | الإصدار: [الإصدار]',
+    '- البيئة: [البيئة: ويب / سطر أوامر / خادم / موبايل] على [نظام التشغيل]',
+    '- التبعيات: استخدم المكتبات القياسية أولاً، واذكر أي تبعية خارجية مع أمر تثبيتها.',
+    '',
+    'القيود:',
+    '- كود نظيف قابل للقراءة، بأسماء متغيرات واضحة وتعليقات للأجزاء المعقدة فقط.',
+    '- معالجة الأخطاء عند حدود النظام (مدخلات المستخدم، الملفات، الشبكة) دون مبالغة.',
+    '- لا تفترض وجود ملفات أو خدمات غير مذكورة — اسأل أو صرّح بالافتراض.',
+    '',
+    'الأمان:',
+    '- تحقق من صحة كل المدخلات الخارجية.',
+    '- لا تضع أسراراً أو مفاتيح في الكود — استخدم متغيرات البيئة.',
+    '',
+    'الأداء: [متطلبات الأداء إن وجدت — مثال: معالجة 10 آلاف عنصر في أقل من ثانية].',
+    '',
+    'الاختبارات: أضف اختبارات وحدة تغطي: الحالة الطبيعية، الحواف، والمدخلات الخاطئة.',
+    '',
+    'شكل الإخراج:',
+    '1. الكود كاملاً وقابلاً للتشغيل مباشرة.',
+    '2. شرح موجز (5 أسطر كحد أقصى) لطريقة العمل.',
+    '3. أمثلة استخدام أو أوامر تشغيل.',
+    '',
+    'قبل التسليم: راجع الكود ذهنياً سطراً سطراً وتأكد من خلوه من أخطاء منطقية أو نحوية.'
+  ].join('\n');
+
+  return [
+    '# البرومبت الاحترافي',
+    F, prompt, F,
+    '',
+    '# الإعدادات المقترحة',
+    '| الإعداد | التوصية |',
+    '|---|---|',
+    '| النموذج | ' + target + ' — استخدم أقوى نموذج متاح للمهام البرمجية المعقدة |',
+    '| المنهجية | مهمة كبيرة؟ اطلب الخطة والهيكل أولاً ثم نفّذ ملفاً ملفاً |',
+    '| المراجعة | اطلب "راجع الكود السابق وحسّنه" في رسالة ثانية |',
+    '',
+    '# النسخة المتقدمة',
+    'أضف هذه الفقرة للبرومبت أعلاه في المشاريع الكبيرة:',
+    F, 'قبل كتابة أي كود: (1) لخّص فهمك للمتطلبات في نقاط، (2) اقترح هيكل الملفات والمكونات، (3) اذكر أي قرارات تصميمية تحتاج تأكيدي. انتظر موافقتي ثم نفّذ.\n\nبعد التنفيذ: قدّم قائمة تحقق ذاتية توضح كيف يلبي الكود كل متطلب، وما الحالات الحدية التي عالجتها.', F,
+    '',
+    '# تحسينات اختيارية',
+    '- ألصق نموذجاً من كودك الحالي ليتبع النموذج نفس الأسلوب والاصطلاحات.',
+    '- حدد إطار العمل والإصدارات بدقة (مثال: Python 3.12 + FastAPI 0.110).',
+    '- اطلب README مختصراً مع الكود إن كان مشروعاً كاملاً.',
+    '',
+    '# أخطاء يجب تجنبها',
+    '- طلب "اكتب لي تطبيقاً" دون تحديد الميزات الدقيقة والبيئة.',
+    '- تشغيل كود يتعامل مع ملفات أو قواعد بيانات دون قراءته أولاً.',
+    '- إهمال ذكر إصدارات اللغة والمكتبات — ستحصل على كود قديم أو غير متوافق.'
+  ].join('\n');
+}
+
+const GENERATORS = { text: genText, image: genImage, video: genVideo, code: genCode };
+
+function generateLocal(idea, type, target){
+  return analysisSection(type, idea, target) + '\n' + GENERATORS[type](idea, target);
+}
+
+/* ========== AI mode ========== */
+const SYSTEM_PROMPT = [
+  'تصرّف كخبير عالمي في هندسة الأوامر (Prompt Engineering) لجميع نماذج الذكاء الاصطناعي: نماذج المحادثة (ChatGPT، Claude، Gemini، Grok) ونماذج الصور (Midjourney، Stable Diffusion، Flux، DALL·E) ونماذج الفيديو (Veo، Sora، Runway، Pika).',
+  'مهمتك: تحويل أي فكرة يقدمها المستخدم إلى برومبت احترافي جاهز للاستخدام مباشرة.',
+  'المنهجية: (1) حلّل الطلب: الهدف، نوع المهمة، الجمهور، المجال، واستنتج الناقص. (2) حسّن الطلب: أزل الغموض وأضف السياق والقيود ومعايير الجودة. (3) أنشئ البرومبت النهائي متضمناً: الدور، الهدف، السياق، التعليمات التفصيلية، القيود، تنسيق الإخراج، وتعليمات بعدم اختلاق المعلومات.',
+  'حسب النوع: نص ← ثلاث نسخ (مختصرة، احترافية، متقدمة جداً). صورة ← برومبت عربي احترافي + Negative Prompt + إعدادات التصوير والعدسة والإضاءة وزاوية الكاميرا والألوان + نسخ للمقاسات (Square: 1024×1024, 2048×2048 | Portrait: 1024×1536, 1080×1350, 1440×2560 | Landscape: 1536×1024, 1920×1080, 2560×1440) ومنصات التواصل (Instagram Post/Story، TikTok، YouTube Thumbnail، Facebook، LinkedIn، X). فيديو ← وصف المشاهد مشهداً بمشهد + حركة الكاميرا + الإضاءة + المؤثرات + الانتقالات + المدة + الصوت + تعليمات Veo/Sora/Runway/Pika. كود ← اللغة والبيئة والمتطلبات والقيود والأداء والأمان والاختبارات وشكل الإخراج.',
+  'تنسيق الإخراج الإلزامي (عناوين Markdown بمستوى #): # تحليل المهمة، # الافتراضات المستخدمة، # البرومبت الاحترافي، # النسخة المتقدمة، # الإعدادات المقترحة، # تحسينات اختيارية، # أخطاء يجب تجنبها، # مخرجات جاهزة للنسخ.',
+  'قواعد صارمة: لا تختلق معلومات. ضع كل برومبت نهائي داخل كتلة كود ليسهل نسخه. برومبتات الصور باللغة العربية. استخدم متغيرات قابلة للتخصيص بين أقواس مثل [المجال] و[الجمهور] عند الحاجة. النصوص العربية بالاتجاه من اليمين لليسار.'
+].join('\n');
+
+function buildUserMessage(idea, type, target){
+  return 'الفكرة: ' + idea + '\nنوع المهمة: ' + (type === 'auto' ? 'حدده أنت من الفكرة' : TYPE_LABEL[type]) + '\nالنموذج المستهدف: ' + target;
+}
+
+async function callClaude(key, model, userMsg){
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: model, max_tokens: 8000,
+      system: SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMsg }]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error && data.error.message || ('HTTP ' + res.status));
+  return data.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+}
+
+async function callGemini(key, model, userMsg){
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: 'user', parts: [{ text: userMsg }] }]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error && data.error.message || ('HTTP ' + res.status));
+  return data.candidates[0].content.parts.map(p => p.text).join('');
+}
+
+async function callOpenAI(key, model, userMsg){
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + key },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userMsg }
+      ]
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error && data.error.message || ('HTTP ' + res.status));
+  return data.choices[0].message.content;
+}
+
+const AI_CALLERS = { claude: callClaude, gemini: callGemini, openai: callOpenAI };
+
+/* ========== main ========== */
+async function generate(){
+  const idea = $('idea').value.trim();
+  const status = $('status');
+  status.classList.remove('error');
+
+  if (!idea){
+    status.textContent = '✍️ اكتب فكرتك أولاً في المربع أعلاه.';
+    status.classList.add('error');
+    return;
+  }
+  const target = $('targetModel').value;
+  const type = selectedType === 'auto' ? detectType(idea) : selectedType;
+
+  const btn = $('generateBtn');
+  btn.disabled = true;
+
+  try {
+    let md;
+    if (mode === 'local'){
+      status.textContent = '⚡ جارٍ بناء البرومبت...';
+      md = generateLocal(idea, type, target);
+    } else {
+      const provider = $('provider').value;
+      const key = $('apiKey').value.trim();
+      const model = $('aiModel').value.trim() || DEFAULT_MODELS[provider];
+      if (!key){
+        status.textContent = '🔑 أدخل مفتاح API أو بدّل إلى الوضع الفوري.';
+        status.classList.add('error');
+        btn.disabled = false;
+        return;
+      }
+      localStorage.setItem('promptium_key_' + provider, key);
+      localStorage.setItem('promptium_model_' + provider, model);
+      status.textContent = '🤖 جارٍ توليد البرومبت عبر ' + model + ' ... (قد يستغرق حتى دقيقة)';
+      md = await AI_CALLERS[provider](key, model, buildUserMessage(idea, type, target));
+    }
+    $('result').innerHTML = renderMarkdown(md);
+    $('output').classList.add('visible');
+    status.textContent = mode === 'local'
+      ? '✅ تم! (وضع فوري — للنتائج المخصصة بالكامل جرّب وضع الذكاء الاصطناعي)'
+      : '✅ تم التوليد بنجاح.';
+    $('output').scrollIntoView({ behavior: 'smooth' });
+  } catch (err){
+    status.textContent = '❌ خطأ: ' + err.message + ' — تحقق من المفتاح واسم النموذج، أو استخدم الوضع الفوري.';
+    status.classList.add('error');
+  } finally {
+    btn.disabled = false;
+  }
+}
+$('generateBtn').addEventListener('click', generate);
+$('idea').addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>
