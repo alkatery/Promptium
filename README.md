@@ -66,6 +66,7 @@
 
 يمكن تحويل Promptium إلى مساعد دائم عبر:
 
+- **GitHub Copilot** ← ✨ **مدمج تلقائياً في هذا المستودع** — افتح Copilot Chat هنا واكتب فكرتك مباشرة (عبر [`.github/copilot-instructions.md`](.github/copilot-instructions.md))
 - **ChatGPT** ← GPT مخصص (Custom GPT)
 - **Gemini** ← Gemini Gem
 - **Claude** ← Claude Project أو Custom Style
