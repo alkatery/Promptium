@@ -113,6 +113,44 @@
   .copy-btn.copied{background:var(--accent2); color:#00201b; border-color:var(--accent2); font-weight:700;}
   footer{text-align:center; color:var(--muted); margin-top:50px; font-size:.95rem;}
   footer a{color:var(--accent2); text-decoration:none;}
+  /* ===== file attach ===== */
+  .file-zone{margin-top:14px;}
+  .file-btn{
+    width:100%; background:var(--card2); color:var(--muted);
+    border:1.5px dashed var(--border); border-radius:10px;
+    padding:12px; font-family:inherit; font-size:1rem; cursor:pointer; transition:all .15s;
+  }
+  .file-btn:hover{border-color:var(--accent2); color:var(--accent2);}
+  .file-info{display:none; margin-top:10px; padding:10px 14px; background:var(--card2);
+    border:1px solid var(--border); border-radius:10px; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;}
+  .file-info.visible{display:flex;}
+  .file-info .fname{color:var(--accent2); font-weight:700; word-break:break-all;}
+  .file-info .fmeta{color:var(--muted); font-size:.88rem;}
+  .file-info .fremove{background:transparent; border:none; color:var(--danger); cursor:pointer; font-family:inherit; font-size:1rem; font-weight:700;}
+  /* ===== variables panel ===== */
+  #varsPanel{display:none; margin:0 0 18px; padding:16px; background:var(--card2); border:1px dashed var(--accent2); border-radius:12px;}
+  #varsPanel.visible{display:block;}
+  #varsPanel h3{color:var(--accent2); font-size:1.1rem; margin-bottom:10px;}
+  #varsPanel .vars-grid{display:flex; flex-wrap:wrap; gap:10px;}
+  #varsPanel .var-field{flex:1; min-width:200px;}
+  #varsPanel label{display:block; color:var(--muted); font-size:.9rem; margin-bottom:4px;}
+  #varsPanel input{width:100%; background:var(--card); color:var(--text); border:1px solid var(--border);
+    border-radius:8px; padding:8px 12px; font-family:inherit; font-size:.98rem;}
+  #varsPanel input:focus{outline:2px solid var(--accent2); border-color:transparent;}
+  #varsPanel .vars-hint{color:var(--muted); font-size:.85rem; margin-top:10px;}
+  /* ===== history ===== */
+  #historyBar{margin-top:16px;}
+  #historyBar summary{cursor:pointer; color:var(--muted); font-weight:700; list-style:none;}
+  #historyBar summary::-webkit-details-marker{display:none;}
+  #historyBar summary:hover{color:var(--accent2);}
+  .hist-item{display:flex; align-items:center; gap:8px; padding:8px 10px; margin-top:8px;
+    background:var(--card2); border:1px solid var(--border); border-radius:9px;}
+  .hist-item .hist-idea{flex:1; cursor:pointer; word-break:break-word;}
+  .hist-item .hist-idea:hover{color:var(--accent2);}
+  .hist-item .hist-tag{color:var(--muted); font-size:.82rem; white-space:nowrap;}
+  .hist-item .hist-star{background:transparent; border:none; cursor:pointer; font-size:1.1rem; padding:0 2px;}
+  .hist-item .hist-del{background:transparent; border:none; color:var(--danger); cursor:pointer; font-size:1rem;}
+  .hist-empty{color:var(--muted); font-size:.9rem; margin-top:8px;}
   @media (max-width:600px){ body{font-size:16px;} header h1{font-size:1.8rem;} }
 </style>
 </head>
@@ -126,7 +164,16 @@
 
   <div class="card">
     <label class="section-label" for="idea">✍️ اكتب فكرتك أو هدفك</label>
-    <textarea id="idea" placeholder="مثال: صورة إعلانية لعطر فاخر بألوان ذهبية… أو: منشور لينكد إن عن التعلم المستمر… أو: بوت تيليجرام لتذكير المواعيد…"></textarea>
+    <textarea id="idea" placeholder="مثال: صورة إعلانية لعطر فاخر بألوان ذهبية… أو: منشور لينكد إن عن التعلم المستمر… أو: حلّل لي الملف المرفق…"></textarea>
+
+    <div class="file-zone">
+      <input type="file" id="fileInput" accept=".txt,.md,.markdown,.csv,.json,.log,.js,.ts,.py,.html,.css,.xml,.pdf,.docx,.png,.jpg,.jpeg,.webp,.gif" hidden>
+      <button type="button" id="fileBtn" class="file-btn">📎 أرفق ملفاً (PDF · Word · نص · صورة) — اختياري، يُقرأ في متصفحك ويُدمج في البرومبت</button>
+      <div class="file-info" id="fileInfo">
+        <span><span class="fname" id="fileName"></span> <span class="fmeta" id="fileMeta"></span></span>
+        <button type="button" class="fremove" id="fileRemove">✕ إزالة</button>
+      </div>
+    </div>
 
     <div class="row">
       <div class="field">
@@ -192,12 +239,22 @@
     <button id="generateBtn">🚀 حوّل إلى برومبت احترافي</button>
     <button id="megaBtn">🤖 بدون مفتاح API؟ انسخ برومبت الخبير + فكرتك، والصقه في ChatGPT / Claude / Gemini المجاني</button>
     <div id="status"></div>
+
+    <details id="historyBar">
+      <summary>🕑 السجل والمفضّلة</summary>
+      <div id="historyList"></div>
+    </details>
   </div>
 
   <div class="card" id="output">
     <div class="out-toolbar">
       <h2>📋 النتيجة</h2>
       <button class="copy-all-btn" id="copyAllBtn">📑 نسخ كل البرومبتات</button>
+    </div>
+    <div id="varsPanel">
+      <h3>✏️ املأ المتغيرات (اختياري)</h3>
+      <div class="vars-grid" id="varsGrid"></div>
+      <p class="vars-hint">القيم تُطبَّق فوراً على كل البرومبتات أعلاه. اترك أي حقل فارغاً ليبقى المتغيّر كما هو.</p>
     </div>
     <div id="result"></div>
   </div>
@@ -215,6 +272,10 @@ const F = '```'; // code fence
 let selectedType = 'auto';
 let mode = localStorage.getItem('promptium_mode') || 'local';
 const DEFAULT_MODELS = { claude: 'claude-opus-4-8', gemini: 'gemini-2.5-flash', openai: 'gpt-4o-mini' };
+
+/* attached file: extracted text (for all modes) or image data (vision, AI mode) */
+let attached = { name: '', text: '', image: null }; // image = { dataUrl, base64, mediaType }
+let rawBlocks = [];   // pristine copy of generated code blocks (for live variable fill-in)
 
 /* ========== UI wiring ========== */
 const $ = (id) => document.getElementById(id);
@@ -1397,10 +1458,20 @@ const SYSTEM_PROMPT = [
 ].join('\n');
 
 function buildUserMessage(idea, type, target){
-  return 'الفكرة: ' + idea + '\nنوع المهمة: ' + (type === 'auto' ? 'حدده أنت من الفكرة' : TYPE_LABEL[type]) + '\nالنموذج المستهدف: ' + target;
+  let msg = 'الفكرة: ' + idea + '\nنوع المهمة: ' + (type === 'auto' ? 'حدده أنت من الفكرة' : TYPE_LABEL[type]) + '\nالنموذج المستهدف: ' + target;
+  if (attached.text){
+    msg += '\n\n═══ محتوى الملف المرفق (' + attached.name + ') ═══\n' + attached.text +
+           '\n═══ نهاية الملف ═══\nإن كان الطلب معالجة لهذا المحتوى (تحليل/تلخيص/ترجمة...) فنفّذها عليه مباشرة معتمداً على ما ورد فيه فقط.';
+  } else if (attached.image){
+    msg += '\n\n(أُرفقت صورة مع الطلب — حلّلها/تعامل معها حسب الفكرة إن كان ذلك مقصوداً.)';
+  }
+  return msg;
 }
 
 async function callClaude(key, model, userMsg){
+  const content = attached.image
+    ? [{ type: 'image', source: { type: 'base64', media_type: attached.image.mediaType, data: attached.image.base64 } }, { type: 'text', text: userMsg }]
+    : userMsg;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -1412,7 +1483,7 @@ async function callClaude(key, model, userMsg){
     body: JSON.stringify({
       model: model, max_tokens: 8000,
       system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userMsg }]
+      messages: [{ role: 'user', content: content }]
     })
   });
   const data = await res.json();
@@ -1421,12 +1492,14 @@ async function callClaude(key, model, userMsg){
 }
 
 async function callGemini(key, model, userMsg){
+  const parts = [{ text: userMsg }];
+  if (attached.image) parts.unshift({ inline_data: { mime_type: attached.image.mediaType, data: attached.image.base64 } });
   const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + encodeURIComponent(model) + ':generateContent?key=' + encodeURIComponent(key), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-      contents: [{ role: 'user', parts: [{ text: userMsg }] }]
+      contents: [{ role: 'user', parts: parts }]
     })
   });
   const data = await res.json();
@@ -1435,6 +1508,9 @@ async function callGemini(key, model, userMsg){
 }
 
 async function callOpenAI(key, model, userMsg){
+  const userContent = attached.image
+    ? [{ type: 'text', text: userMsg }, { type: 'image_url', image_url: { url: attached.image.dataUrl } }]
+    : userMsg;
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'Authorization': 'Bearer ' + key },
@@ -1442,7 +1518,7 @@ async function callOpenAI(key, model, userMsg){
       model: model,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userMsg }
+        { role: 'user', content: userContent }
       ]
     })
   });
@@ -1453,25 +1529,233 @@ async function callOpenAI(key, model, userMsg){
 
 const AI_CALLERS = { claude: callClaude, gemini: callGemini, openai: callOpenAI };
 
+/* ==================================================================
+   file reading (client-side): text / pdf / docx / image
+   ================================================================== */
+const CONTENT_PLACEHOLDERS = [
+  '[ألصق المحتوى أو أرفق الملف هنا]', '[أرفق الملف أو ألصق نصه هنا]',
+  '[الملف/المحتوى المرفق أدناه]', '[الملف المرفق أدناه]', '[الملف المرفق]',
+  '[ألصق المحتوى]', '[ألصق النص]'
+];
+function fmtSize(n){ return n < 1024 ? n + ' ب' : n < 1048576 ? (n/1024).toFixed(1) + ' ك.ب' : (n/1048576).toFixed(1) + ' م.ب'; }
+
+const _cdnCache = {};
+function loadScript(src){
+  if (_cdnCache[src]) return _cdnCache[src];
+  _cdnCache[src] = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve;
+    s.onerror = () => { delete _cdnCache[src]; reject(new Error('تعذّر تحميل مكتبة القراءة (تحقق من الإنترنت)')); };
+    document.head.appendChild(s);
+  });
+  return _cdnCache[src];
+}
+function readAsText(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('تعذّرت قراءة الملف')); r.readAsText(file); }); }
+function readAsDataURL(file){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('تعذّرت قراءة الملف')); r.readAsDataURL(file); }); }
+
+async function extractPdf(file){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs').catch(() => { throw new Error('تعذّر تحميل قارئ PDF'); });
+  const pdfjsLib = window['pdfjsLib'] || window.pdfjsLib;
+  if (!pdfjsLib) throw new Error('قارئ PDF غير متاح — الصق نص الملف يدوياً');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let out = '';
+  const pages = Math.min(pdf.numPages, 50);
+  for (let i = 1; i <= pages; i++){
+    const page = await pdf.getPage(i);
+    const tc = await page.getTextContent();
+    out += tc.items.map(it => it.str).join(' ') + '\n\n';
+  }
+  if (pdf.numPages > 50) out += '\n[تم اقتطاف أول 50 صفحة]';
+  return out.trim();
+}
+async function extractDocx(file){
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js').catch(() => { throw new Error('تعذّر تحميل قارئ Word'); });
+  if (!window.mammoth) throw new Error('قارئ Word غير متاح — احفظ الملف كنص والصقه');
+  const buf = await file.arrayBuffer();
+  const result = await window.mammoth.extractRawText({ arrayBuffer: buf });
+  return (result.value || '').trim();
+}
+
+async function handleFile(file){
+  const status = $('status');
+  status.classList.remove('error', 'ok');
+  const name = file.name, ext = (name.split('.').pop() || '').toLowerCase();
+  const MAX = 12 * 1024 * 1024;
+  if (file.size > MAX){ status.textContent = '❌ الملف كبير جداً (الحد 12 م.ب).'; status.classList.add('error'); return; }
+
+  attached = { name: name, text: '', image: null };
+  const IMG = ['png','jpg','jpeg','webp','gif'];
+  const TEXT = ['txt','md','markdown','csv','json','log','js','ts','py','html','css','xml'];
+  try {
+    status.textContent = '📎 جارٍ قراءة الملف...';
+    if (ext === 'pdf'){ attached.text = await extractPdf(file); }
+    else if (ext === 'docx'){ attached.text = await extractDocx(file); }
+    else if (IMG.includes(ext)){
+      const dataUrl = await readAsDataURL(file);
+      attached.image = { dataUrl, base64: dataUrl.split(',')[1], mediaType: file.type || ('image/' + (ext === 'jpg' ? 'jpeg' : ext)) };
+    }
+    else if (TEXT.includes(ext) || file.type.startsWith('text/')){ attached.text = await readAsText(file); }
+    else { attached.text = await readAsText(file); } // best effort
+  } catch (err){
+    attached = { name: '', text: '', image: null };
+    status.textContent = '❌ ' + err.message; status.classList.add('error');
+    updateFileInfo(); return;
+  }
+  updateFileInfo();
+  status.classList.add('ok');
+  status.textContent = attached.image
+    ? '✅ أُرفقت الصورة. تُحلَّل في وضع الذكاء الاصطناعي (نموذج يدعم الرؤية) أو زر «بدون مفتاح».'
+    : '✅ قُرئ الملف (' + attached.text.length.toLocaleString('ar') + ' حرف) وسيُدمج تلقائياً في البرومبت.';
+}
+
+function updateFileInfo(){
+  const info = $('fileInfo');
+  if (!attached.name){ info.classList.remove('visible'); return; }
+  $('fileName').textContent = attached.name;
+  $('fileMeta').textContent = attached.image ? '(صورة)' : '(' + attached.text.length.toLocaleString('ar') + ' حرف)';
+  info.classList.add('visible');
+}
+$('fileBtn').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ''; });
+$('fileRemove').addEventListener('click', () => {
+  attached = { name: '', text: '', image: null };
+  updateFileInfo();
+  const s = $('status'); s.classList.remove('error','ok'); s.textContent = '';
+});
+
+/* inject actual file content into template placeholders (local + mega) */
+function injectAttachedContent(md){
+  if (!attached.text) return md;
+  let out = md;
+  for (const ph of CONTENT_PLACEHOLDERS) out = out.split(ph).join(attached.text);
+  return out;
+}
+
+/* ==================================================================
+   variable fill-in
+   ================================================================== */
+function collectVars(blocks){
+  const seen = new Set(), vars = [];
+  const re = /\[([^\[\]\n]{1,60})\]/g;
+  for (const b of blocks){
+    let m;
+    while ((m = re.exec(b)) !== null){
+      const full = m[0];
+      if (CONTENT_PLACEHOLDERS.includes(full)) continue;
+      if (!seen.has(full)){ seen.add(full); vars.push(full); }
+    }
+  }
+  return vars;
+}
+function buildVarsPanel(blocks){
+  const vars = collectVars(blocks);
+  const grid = $('varsGrid'), panel = $('varsPanel');
+  grid.innerHTML = '';
+  if (!vars.length){ panel.classList.remove('visible'); return; }
+  vars.forEach((v, i) => {
+    const label = v.slice(1, -1);
+    const field = document.createElement('div');
+    field.className = 'var-field';
+    field.innerHTML = '<label>' + escapeHtml(label) + '</label>';
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.placeholder = label; inp.dataset.var = v;
+    inp.addEventListener('input', applyVars);
+    field.appendChild(inp);
+    grid.appendChild(field);
+  });
+  panel.classList.add('visible');
+}
+function applyVars(){
+  const inputs = $('varsGrid').querySelectorAll('input');
+  const map = {};
+  inputs.forEach(inp => { const val = inp.value.trim(); if (val) map[inp.dataset.var] = val; });
+  copyBlocks.length = 0;
+  rawBlocks.forEach((raw, i) => {
+    let filled = raw;
+    for (const [k, val] of Object.entries(map)) filled = filled.split(k).join(val);
+    copyBlocks.push(filled);
+    const pre = $('blk' + (i + 1));
+    if (pre) pre.textContent = filled;
+  });
+}
+
+/* ==================================================================
+   history & favorites (localStorage)
+   ================================================================== */
+const HIST_KEY = 'promptium_history';
+function loadHist(){ try { return JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch(e){ return []; } }
+function saveHist(h){ localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 40))); }
+function addHist(idea, type, target){
+  let h = loadHist();
+  h = h.filter(x => !(x.idea === idea && x.type === type)); // dedupe
+  h.unshift({ idea, type, target, fav: false, t: h.length });
+  // keep favorites even beyond cap
+  const favs = h.filter(x => x.fav), rest = h.filter(x => !x.fav);
+  saveHist(favs.concat(rest).slice(0, 40));
+  renderHist();
+}
+function renderHist(){
+  const h = loadHist(), list = $('historyList');
+  list.innerHTML = '';
+  if (!h.length){ list.innerHTML = '<div class="hist-empty">لا يوجد سجل بعد — ولّد برومبتاً وسيظهر هنا.</div>'; return; }
+  h.sort((a, b) => (b.fav - a.fav));
+  h.forEach((item, idx) => {
+    const row = document.createElement('div');
+    row.className = 'hist-item';
+    const star = document.createElement('button');
+    star.className = 'hist-star'; star.textContent = item.fav ? '⭐' : '☆'; star.title = 'مفضّلة';
+    star.addEventListener('click', () => { item.fav = !item.fav; saveHist(h); renderHist(); });
+    const idea = document.createElement('span');
+    idea.className = 'hist-idea'; idea.textContent = item.idea;
+    idea.title = 'إعادة استخدام';
+    idea.addEventListener('click', () => {
+      $('idea').value = item.idea;
+      $('targetModel').value = item.target || 'عام';
+      document.querySelectorAll('#typePills .pill').forEach(b => b.classList.toggle('active', b.dataset.type === (item.type || 'auto')));
+      selectedType = item.type || 'auto';
+      $('idea').scrollIntoView({ behavior: 'smooth' });
+      $('idea').focus();
+    });
+    const tag = document.createElement('span');
+    tag.className = 'hist-tag'; tag.textContent = TYPE_LABEL[item.type] ? TYPE_LABEL[item.type].split(' ')[0] : '';
+    const del = document.createElement('button');
+    del.className = 'hist-del'; del.textContent = '🗑'; del.title = 'حذف';
+    del.addEventListener('click', () => { const nh = loadHist().filter((_, i) => i !== idx); saveHist(nh); renderHist(); });
+    row.append(star, idea, tag, del);
+    list.appendChild(row);
+  });
+}
+renderHist();
+
 /* ========== mega prompt (no API key needed) ========== */
 function buildMegaPrompt(){
   const idea = $('idea').value.trim();
   const type = selectedType === 'auto' ? (idea ? detectType(idea) : 'auto') : selectedType;
   const target = $('targetModel').value;
-  return SYSTEM_PROMPT +
+  let out = SYSTEM_PROMPT +
     '\n\n════════════════════════\n' +
     'طلبي الآن:\n' +
     'الفكرة: ' + (idea || '[اكتب فكرتك هنا]') +
     '\nنوع المهمة: ' + (type === 'auto' ? 'حدده أنت من الفكرة' : TYPE_LABEL[type]) +
-    '\nالنموذج المستهدف: ' + target +
-    '\n\nابدأ بتحليل الطلب ثم أعطني النتيجة كاملة بالتنسيق الإلزامي.';
+    '\nالنموذج المستهدف: ' + target;
+  if (attached.text){
+    out += '\n\n═══ محتوى الملف المرفق (' + attached.name + ') ═══\n' + attached.text +
+           '\n═══ نهاية الملف ═══\nإن كان الطلب معالجة لهذا المحتوى فنفّذها عليه معتمداً على ما ورد فيه فقط.';
+  } else if (attached.image){
+    out += '\n\n(لديّ صورة مرفقة — سأرفقها في المحادثة؛ تعامل معها حسب الفكرة.)';
+  }
+  return out + '\n\nابدأ بتحليل الطلب ثم أعطني النتيجة كاملة بالتنسيق الإلزامي.';
 }
 $('megaBtn').addEventListener('click', () => {
   copyText(buildMegaPrompt(), $('megaBtn'));
   const status = $('status');
   status.classList.remove('error');
   status.classList.add('ok');
-  status.textContent = '✅ نُسخ برومبت الخبير كاملاً — الصقه الآن في chatgpt.com أو claude.ai أو gemini.google.com واحصل على النتيجة الاحترافية مجاناً.';
+  status.textContent = attached.image
+    ? '✅ نُسخ برومبت الخبير — الصقه في claude.ai أو gemini.google.com أو chatgpt.com، ثم ارفع صورتك هناك.'
+    : '✅ نُسخ برومبت الخبير كاملاً' + (attached.text ? ' (مع محتوى ملفك)' : '') + ' — الصقه الآن في chatgpt.com أو claude.ai أو gemini.google.com مجاناً.';
 });
 
 /* ========== main ========== */
@@ -1495,7 +1779,7 @@ async function generate(){
     let md;
     if (mode === 'local'){
       status.textContent = '⚡ جارٍ تحليل فكرتك وبناء البرومبت...';
-      md = generateLocal(idea, type, target);
+      md = injectAttachedContent(generateLocal(idea, type, target));
     } else {
       const provider = $('provider').value;
       const key = $('apiKey').value.trim();
@@ -1512,10 +1796,13 @@ async function generate(){
       md = await AI_CALLERS[provider](key, model, buildUserMessage(idea, type, target));
     }
     $('result').innerHTML = renderMarkdown(md);
+    rawBlocks = copyBlocks.slice();          // pristine copy for variable fill-in
+    buildVarsPanel(rawBlocks);
+    addHist(idea, type, target);
     $('output').classList.add('visible');
     status.classList.add('ok');
     status.textContent = mode === 'local'
-      ? '✅ تم التحليل والتوليد! أضف تفاصيل لفكرتك (أسلوب، ألوان، جمهور) وأعد التوليد لنتيجة أدق — أو استخدم زر «بدون مفتاح» لجودة الذكاء الاصطناعي الكاملة.'
+      ? '✅ تم التحليل والتوليد! ' + (attached.text ? 'دُمج محتوى ملفك في البرومبت. ' : '') + 'املأ المتغيرات أعلى النتيجة، أو استخدم زر «بدون مفتاح» لجودة الذكاء الاصطناعي.'
       : '✅ تم التوليد بنجاح.';
     $('output').scrollIntoView({ behavior: 'smooth' });
   } catch (err){
